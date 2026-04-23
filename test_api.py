@@ -302,7 +302,7 @@ def main():
     test_user_deleted(user_id)
 
     print(f"\nPontuacao final: {score}/{max_score}\n")
-    return 0 if score == max_score else 1
+    return 1
 
 
 if __name__ == "__main__":

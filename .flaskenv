@@ -1,2 +1,2 @@
-FLASK_APP=app.py
+FLASK_APP=monit.py
 FLASK_DEBUG=1
