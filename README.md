@@ -1,4 +1,5 @@
 # Sistema de Controle de Vagas de Estacionamento
+Alunos: Allyfh Pontes, Douglas Pierry e Willemberg Lopes
 
 API REST para gerenciar estacionamentos e suas vagas.
 
