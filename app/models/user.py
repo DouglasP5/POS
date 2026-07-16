@@ -1,4 +1,6 @@
-from app .extensions import db 
+from werkzeug .security import check_password_hash ,generate_password_hash
+
+from app .extensions import db
 
 
 class User (db .Model ):
@@ -16,3 +18,9 @@ class User (db .Model ):
     lazy =True ,
     cascade ="all, delete-orphan",
     )
+
+    def set_senha (self ,senha_plana ):
+        self .senha =generate_password_hash (senha_plana )
+
+    def check_senha (self ,senha_plana ):
+        return check_password_hash (self .senha ,senha_plana )

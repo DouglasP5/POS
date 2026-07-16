@@ -1,7 +1,8 @@
-from flask import Blueprint ,jsonify ,request 
+from flask import Blueprint ,jsonify ,request
+from flask_jwt_extended import jwt_required
 
-from app .controllers .parking_controller import criar_estacionamento ,listar_estacionamentos 
-from app .controllers .parking_spot_controller import listar_vagas_por_estacionamento 
+from app .controllers .parking_controller import criar_estacionamento ,listar_estacionamentos
+from app .controllers .parking_spot_controller import listar_vagas_por_estacionamento
 
 
 parkings_bp =Blueprint ("parkings",__name__ )
@@ -10,10 +11,11 @@ parkings_bp =Blueprint ("parkings",__name__ )
 @parkings_bp .route ("/",methods =["GET"])
 def get_parkings ():
     response ,status =listar_estacionamentos ()
-    return jsonify (response ),status 
+    return jsonify (response ),status
 
 
 @parkings_bp .route ("/",methods =["POST"])
+@jwt_required ()
 def post_parking ():
     data =request .get_json ()
     response ,status =criar_estacionamento (data )

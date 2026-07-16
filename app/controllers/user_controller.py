@@ -16,7 +16,9 @@ def listar_usuarios ():
 def criar_usuario (data ):
     dados_validados =user_schema .load (data )
 
+    senha_plana =dados_validados .pop ("senha")
     novo_usuario =User (**dados_validados )
+    novo_usuario .set_senha (senha_plana )
 
     db .session .add (novo_usuario )
     db .session .commit ()
@@ -28,9 +30,13 @@ def atualizar_usuario (id ,data ):
     usuario =User .query .get_or_404 (id )
 
     dados_validados =user_schema .load (data ,partial =True )
+    senha_plana =dados_validados .pop ("senha",None )
 
     for campo ,valor in dados_validados .items ():
         setattr (usuario ,campo ,valor )
+
+    if senha_plana :
+        usuario .set_senha (senha_plana )
 
     db .session .commit ()
 
