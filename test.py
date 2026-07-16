@@ -1,4 +1,6 @@
-import requests 
+import time
+
+import requests
 
 BASE_URL ="http://127.0.0.1:5000"
 
@@ -16,17 +18,33 @@ def print_result (name ,success ):
 
 
 def test_create_user ():
-    r =requests .post (f"{BASE_URL }/users",json ={
+    payload ={
     "nome":"Teste",
-    "email":"teste@email.com",
+    "email":f"teste_{int (time .time ()*1000 )}@email.com",
     "senha":"123456"
-    })
+    }
+    r =requests .post (f"{BASE_URL }/users",json =payload )
     ok =r .status_code in [200 ,201 ]
     print_result ("Criar usuário",ok )
 
     if ok :
-        return r .json ()["data"]["id"]
-    return None 
+        return r .json ()["data"]["id"],payload
+    return None
+
+
+
+def test_login (payload ):
+    r =requests .post (f"{BASE_URL }/login",json ={
+    "email":payload ["email"],
+    "senha":payload ["senha"],
+    })
+    ok =r .status_code ==200
+    print_result ("Login",ok )
+
+    if ok :
+        token =r .json ()["data"]["access_token"]
+        return {"Authorization":f"Bearer {token }"}
+    return None
 
 
 
@@ -37,11 +55,11 @@ def test_list_users ():
 
 
 
-def test_create_message (user_id ):
+def test_create_message (user_id ,headers ):
     r =requests .post (f"{BASE_URL }/messages",json ={
     "content":"Mensagem teste",
-    "user_id":user_id 
-    })
+    "user_id":user_id
+    },headers =headers )
     ok =r .status_code in [200 ,201 ]
     print_result ("Criar mensagem válida",ok )
 
@@ -51,12 +69,12 @@ def test_create_message (user_id ):
 
 
 
-def test_invalid_user_message ():
+def test_invalid_user_message (headers ):
     r =requests .post (f"{BASE_URL }/messages",json ={
     "content":"Erro",
-    "user_id":9999 
-    })
-    ok =r .status_code ==404 
+    "user_id":9999
+    },headers =headers )
+    ok =r .status_code ==404
     print_result ("Erro mensagem com usuário inválido",ok )
 
 
@@ -75,18 +93,18 @@ def test_messages_by_user (user_id ):
 
 
 
-def test_update_user (user_id ):
+def test_update_user (user_id ,headers ):
     r =requests .patch (f"{BASE_URL }/users/{user_id }",json ={
     "nome":"Atualizado"
-    })
-    ok =r .status_code ==200 
+    },headers =headers )
+    ok =r .status_code ==200
     print_result ("Atualizar usuário",ok )
 
 
 
-def test_delete_user (user_id ):
-    r =requests .delete (f"{BASE_URL }/users/{user_id }")
-    ok =r .status_code ==204 
+def test_delete_user (user_id ,headers ):
+    r =requests .delete (f"{BASE_URL }/users/{user_id }",headers =headers )
+    ok =r .status_code ==204
     print_result ("Deletar usuário",ok )
 
 
@@ -112,21 +130,24 @@ def test_404 ():
 
 print ("\n🚀 Iniciando testes (User + Message)...\n")
 
-user_id =test_create_user ()
+created =test_create_user ()
+user_id ,payload =created if created else (None ,None )
 
 test_list_users ()
 
-if user_id :
-    test_create_message (user_id )
-    test_messages_by_user (user_id )
-    test_update_user (user_id )
+headers =test_login (payload )if user_id else None
 
-test_invalid_user_message ()
+if user_id :
+    test_create_message (user_id ,headers )
+    test_messages_by_user (user_id )
+    test_update_user (user_id ,headers )
+
+test_invalid_user_message (headers )
 test_list_messages ()
 test_validation ()
 test_404 ()
 
 if user_id :
-    test_delete_user (user_id )
+    test_delete_user (user_id ,headers )
 
-print (f"\n🎯 Pontuação final: {score }/30\n")
+print (f"\n🎯 Pontuação final: {score }/33\n")

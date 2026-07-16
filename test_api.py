@@ -100,6 +100,26 @@ def test_create_user():
     return None
 
 
+def test_login(payload):
+    data = expect_json_response(
+        "Login",
+        "POST",
+        "/login",
+        200,
+        json={"email": payload["email"], "senha": payload["senha"]},
+    )
+    if not data:
+        return None
+
+    token = data.get("data", {}).get("access_token") if isinstance(data.get("data"), dict) else None
+    ok = data.get("success") is True and bool(token)
+    print_result("Login", ok, "token de acesso nao encontrado")
+
+    if ok:
+        return {"Authorization": f"Bearer {token}"}
+    return None
+
+
 def test_list_users(expected_user_id):
     data = expect_json_response("Listar usuarios", "GET", "/users/", 200)
     if not data:
@@ -114,7 +134,7 @@ def test_list_users(expected_user_id):
     print_result("Listar usuarios", ok, "usuario criado nao encontrado")
 
 
-def test_create_message(user_id):
+def test_create_message(user_id, headers):
     payload = {
         "content": "Mensagem teste",
         "user_id": user_id,
@@ -125,6 +145,7 @@ def test_create_message(user_id):
         "/messages/",
         201,
         json=payload,
+        headers=headers,
     )
     if not data:
         return None
@@ -144,13 +165,14 @@ def test_create_message(user_id):
     return None
 
 
-def test_invalid_user_message():
+def test_invalid_user_message(headers):
     data = expect_json_response(
         "Erro mensagem com usuario invalido",
         "POST",
         "/messages/",
         404,
         json={"content": "Erro", "user_id": 999999},
+        headers=headers,
     )
     if not data:
         return
@@ -200,7 +222,7 @@ def test_messages_by_user(user_id, expected_message_id):
     print_result("Mensagens por usuario", ok, "mensagem do usuario nao encontrada")
 
 
-def test_update_user(user_id):
+def test_update_user(user_id, headers):
     novo_nome = "Atualizado"
     data = expect_json_response(
         "Atualizar usuario",
@@ -208,6 +230,7 @@ def test_update_user(user_id):
         f"/users/{user_id}",
         200,
         json={"nome": novo_nome},
+        headers=headers,
     )
     if not data:
         return
@@ -254,8 +277,8 @@ def test_404():
     print_result("Rota inexistente", ok, "payload de erro inesperado")
 
 
-def test_delete_user(user_id):
-    response, error = safe_request("DELETE", f"/users/{user_id}")
+def test_delete_user(user_id, headers):
+    response, error = safe_request("DELETE", f"/users/{user_id}", headers=headers)
     if error:
         print_result("Deletar usuario", False, f"falha na requisicao: {error}")
         return
@@ -286,19 +309,21 @@ def main():
         print(f"\nPontuacao final: {score}/{max_score}\n")
         return 1
 
-    user_id, _payload = created
+    user_id, payload = created
     test_list_users(user_id)
 
-    message_id = test_create_message(user_id)
+    headers = test_login(payload)
+
+    message_id = test_create_message(user_id, headers)
     if message_id:
         test_messages_by_user(user_id, message_id)
         test_list_messages(message_id)
 
-    test_update_user(user_id)
-    test_invalid_user_message()
+    test_update_user(user_id, headers)
+    test_invalid_user_message(headers)
     test_validation()
     test_404()
-    test_delete_user(user_id)
+    test_delete_user(user_id, headers)
     test_user_deleted(user_id)
 
     print(f"\nPontuacao final: {score}/{max_score}\n")

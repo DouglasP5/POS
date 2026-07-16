@@ -1,6 +1,7 @@
-from flask import Blueprint ,jsonify ,request 
+from flask import Blueprint ,jsonify ,request
+from flask_jwt_extended import jwt_required
 
-from app .controllers .message_controller import listar_mensagens_por_usuario 
+from app .controllers .message_controller import listar_mensagens_por_usuario
 from app .controllers .user_controller import (
 atualizar_usuario ,
 criar_usuario ,
@@ -26,13 +27,15 @@ def post_user ():
 
 
 @users_bp .route ("/<int:id>",methods =["PATCH"])
+@jwt_required ()
 def patch_user (id ):
     data =request .get_json ()
     response ,status =atualizar_usuario (id ,data )
-    return jsonify (response ),status 
+    return jsonify (response ),status
 
 
 @users_bp .route ("/<int:id>",methods =["DELETE"])
+@jwt_required ()
 def delete_user (id ):
     response ,status =deletar_usuario (id )
     if status ==204 :
